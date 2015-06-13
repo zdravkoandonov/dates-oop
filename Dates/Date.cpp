@@ -1,8 +1,12 @@
 #include "Date.h"
 #include "Utility.h"
+#include <algorithm>
+
+using std::sort;
 
 bool Date::areHolidaysInitialized = false;
 
+vector<Date> Date::officialHolidays;
 vector<Date> Date::holidays;
 vector<Date> Date::workOffDays;
 
@@ -10,22 +14,18 @@ void Date::initializeHolidays()
 {
 	areHolidaysInitialized = true;
 
-	holidays.push_back(Date(1, 1, 2015));
-	holidays.push_back(Date(2, 3, 2015));
-	holidays.push_back(Date(3, 3, 2015));
-	holidays.push_back(Date(10, 4, 2015));
-	holidays.push_back(Date(11, 4, 2015));
-	holidays.push_back(Date(12, 4, 2015));
-	holidays.push_back(Date(13, 4, 2015));
-	holidays.push_back(Date(1, 5, 2015));
-	holidays.push_back(Date(6, 5, 2015));
-	holidays.push_back(Date(21, 9, 2015));
-	holidays.push_back(Date(22, 9, 2015));
-	holidays.push_back(Date(24, 12, 2015));
-	holidays.push_back(Date(25, 12, 2015));
-	holidays.push_back(Date(26, 12, 2015));
-	holidays.push_back(Date(31, 12, 2015));
-	holidays.push_back(Date(1, 1, 2016));
+	// if adding new holidays here keep them in ascending order
+	officialHolidays.push_back(Date(1, 1, 2015));
+	officialHolidays.push_back(Date(3, 3, 2015));
+	officialHolidays.push_back(Date(1, 5, 2015));
+	officialHolidays.push_back(Date(6, 5, 2015));
+	officialHolidays.push_back(Date(24, 5, 2015));
+	officialHolidays.push_back(Date(6, 9, 2015));
+	officialHolidays.push_back(Date(22, 9, 2015));
+	officialHolidays.push_back(Date(24, 12, 2015));
+	officialHolidays.push_back(Date(25, 12, 2015));
+	officialHolidays.push_back(Date(26, 12, 2015));
+	officialHolidays.push_back(Date(31, 12, 2015));
 }
 
 Date::Date(int day, int month, int year)
@@ -68,7 +68,7 @@ Date::Date(char q, int dayCode, int month, int year)
 		firstSeekedDay = 7;
 	}
 
-	if (q != 'l')
+	if (q != 'L')
 	{
 		int seekedDay = firstSeekedDay + 7 * (Utility::charToInt(q) - 1);
 		if (seekedDay <= daysInMonthCount(*this)) // if such day exists in the month
@@ -80,10 +80,6 @@ Date::Date(char q, int dayCode, int month, int year)
 	{
 		this->day = firstSeekedDay + 7 * ((daysInMonthCount(*this) - firstSeekedDay) / 7);
 	}
-}
-
-Date::~Date()
-{
 }
 
 int Date::getDay() const
@@ -109,7 +105,10 @@ int Date::getWeekday() const
 bool Date::isWorkday() const
 {
 	int dayCode = getWeekday();
-	return !dateExists(holidays, *this) && ((dayCode != 6 && dayCode != 0) || dateExists(workOffDays, *this));
+	return ((dayCode != 6 && dayCode != 0) || dateExists(workOffDays, *this)) 
+		&& !dateExists(holidays, *this) 
+		&& !isOfficialHoliday(*this) 
+		&& !(*this == (calcEaster(year) - 2)); // the friday before easter is a holiday
 }
 
 Date Date::getClosestWorkday()
@@ -197,6 +196,10 @@ void Date::addHoliday(Date &holiday, Date &workOff)
 {
 	holidays.push_back(holiday);
 	workOffDays.push_back(workOff);
+
+	sort(holidays.begin(), holidays.begin() + holidays.size(), isFirstDateEarlier);
+
+	sort(workOffDays.begin(), workOffDays.begin() + workOffDays.size(), isFirstDateEarlier);
 }
 
 void Date::printDate(ostream& out) const
@@ -395,6 +398,33 @@ int Date::compareDates(Date date1, Date date2)
 	}
 }
 
+// returns <0 if date1 is before date2
+// 			0 if date1 is the same as date2
+// 		   >0 if date1 is after date2
+int Date::compareDatesNoYear(Date date1, Date date2)
+{
+	if (date1.month == date2.month)
+	{
+		if (date1.day == date2.day)
+		{
+			return 0;
+		}
+		else
+		{
+			return date1.day - date2.day;
+		}
+	}
+	else
+	{
+		return date1.month - date2.month;
+	}
+}
+
+bool Date::isFirstDateEarlier(Date date1, Date date2)
+{
+	return compareDates(date1, date2) < 0;
+}
+
 const char* Date::getWeekdayName(int dayCode)
 {
 	switch (dayCode)
@@ -501,43 +531,35 @@ bool Date::isDateCorrect(int day, int month, int year)
 
 Date Date::calcEaster(int year)
 {
-	int a, b, c, k, p, q, m, n, d, e;
-	a = year % 19;
-	b = year % 4;
-	c = year % 7;
-	k = year / 100;
-	p = (13 + 8*k) / 25;
-	q = k / 4;
-	m = (15 - p + k - q) % 30;
-	n = (4 + k - q) % 7;
-	d = (19*a + m) % 30;
-	e = (2*b + 4*c + 6*d + n) % 7;
+	int a, b, c, d, e;
+	a = year % 4;
+	b = year % 7;
+	c = year % 19;
+	d = (19 * c + 16) % 30;
+	e = (2 * a + 4 * b + 6 * d) % 7;
 
-	int day, month;
-	int dayOfMarch = 22 + d + e;
-	if (dayOfMarch > 31)
-	{
-		if (d == 29 && e == 6)
-		{
-			day = 19;
-		}
-		else if (d == 28 && e == 6 && (11*m+11) % 30 < 19)
-		{
-			day = 18;
-		}
-		else
-		{
-			day = dayOfMarch - 31;
-		}
-		month = 4;
-	}
-	else
-	{
-		day = dayOfMarch;
-		month = 3;
-	}
+	Date easter = Date(21, 3, year) + (d + e);
 
-	return Date(day, month, year);
+	// convert to new style
+	if (year >= 1583 && year < 1700)
+		easter += 10;
+	else if (year >= 1700 && year < 1800)
+		easter += 11;
+	else if (year >= 1800 && year < 1900)
+		easter += 12;
+	else if (year >= 1900 && year < 2100)
+		easter += 13;
+	else if (year >= 2100)
+		easter += 14;
+
+	return easter;
+}
+
+bool Date::operator==(const Date& other) const
+{
+	return (day == other.day)
+		&& (month == other.month)
+		&& (year == other.year);
 }
 
 Date& Date::operator+(int days)
@@ -941,57 +963,28 @@ bool Date::dateExists(vector<Date> &dates, Date date)
 	return false;
 }
 
-int Date::datesInIntervalCount(vector<Date> &dates, Date date1, Date date2)
+bool Date::isOfficialHoliday(const Date date)
 {
-	int cnt = dates.size();
-	if (cnt == 0)
-	{
-		return 0;
-	}
-
-	int leftLimit, rightLimit;
-	int l = -1, r = cnt - 1, mid;
-	while (r - l > 1)
+	int cnt = officialHolidays.size();
+	int l = 0, r = cnt - 1, mid;
+	while (l <= r)
 	{
 		mid = (l + r) / 2;
-		if (compareDates(date1, dates[mid]) == 0)
+		if (compareDatesNoYear(date, officialHolidays[mid]) == 0)
 		{
-			r = mid;
-			break;
+			return true;
 		}
-		else if (compareDates(date1, dates[mid]) < 0)
+		else if (compareDatesNoYear(date, officialHolidays[mid]) < 0)
 		{
-			r = mid;
-		}
-		else
-		{
-			l = mid;
-		}
-	}
-	leftLimit = r;
-
-	l = 0;
-	r = cnt;
-	while (r - l > 1)
-	{
-		mid = (l + r) / 2;
-		if (compareDates(date2, dates[mid]) == 0)
-		{
-			l = mid;
-			break;
-		}
-		else if (compareDates(date2, dates[mid]) < 0)
-		{
-			r = mid;
+			r = mid - 1;
 		}
 		else
 		{
 			l = mid + 1;
 		}
 	}
-	rightLimit = l;
 
-	return rightLimit - leftLimit + 1;
+	return false;
 }
 
 ostream& operator<<(ostream& out, const Date& date)
@@ -1006,6 +999,7 @@ istream& operator>>(istream& in, Date& date)
 	in >> day >> month >> year;
 	if (Date::isDateCorrect(day, month, year))
 	{
+		// removes print format settings
 		date = Date(day, month, year);
 	}
 	return in;
