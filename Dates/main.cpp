@@ -49,7 +49,8 @@ int main()
 	cout << Date::calcEaster(2016);
 
 	Date q(30, 4, 2015);
-	Date::addHoliday(Date(4, 5, 2015), Date(9, 5, 2015));
+	Date h1(4, 5, 2015), w1(9, 5, 2015);
+	Date::addHoliday(h1, w1);
 	q.toggleWorkdaysOnly(); // enable
 	q += 5;
 	cout << q;
