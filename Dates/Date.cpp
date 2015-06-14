@@ -562,7 +562,7 @@ bool Date::operator==(const Date& other) const
 		&& (year == other.year);
 }
 
-Date& Date::operator+(int days)
+Date Date::operator+(int days)
 {
 	return (*this) += days;
 }
@@ -655,7 +655,7 @@ Date Date::operator++(int)
 	return prev;
 }
 
-Date& Date::operator-(int days)
+Date Date::operator-(int days)
 {
 	return (*this) -= days;
 }
@@ -748,7 +748,7 @@ Date Date::operator--(int)
 	return prev;
 }
 
-Date& Date::operator*(int months)
+Date Date::operator*(int months)
 {
 	return (*this) *= months;
 }
@@ -774,7 +774,7 @@ Date& Date::operator*=(int months)
 	return *this;
 }
 	
-Date& Date::operator/(int months)
+Date Date::operator/(int months)
 {
 	return (*this) /= months;
 }
@@ -800,7 +800,7 @@ Date& Date::operator/=(int months)
 	return *this;
 }
 	
-Date& Date::operator&(int years)
+Date Date::operator&(int years)
 {
 	return (*this) &= years;
 }
@@ -819,7 +819,7 @@ Date& Date::operator&=(int years)
 	return *this;
 }
 	
-Date& Date::operator|(int years)
+Date Date::operator|(int years)
 {
 	return (*this) |= years;
 }
@@ -838,7 +838,7 @@ Date& Date::operator|=(int years)
 	return *this;
 }
 	
-Date& Date::operator^(int weeks)
+Date Date::operator^(int weeks)
 {
 	return (*this) ^= weeks;
 }
@@ -849,7 +849,7 @@ Date& Date::operator^=(int weeks)
 	return *this;
 }
 	
-Date& Date::operator%(int weeks)
+Date Date::operator%(int weeks)
 {
 	return (*this) %= weeks;
 }

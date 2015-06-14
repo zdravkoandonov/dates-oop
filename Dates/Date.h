@@ -59,32 +59,32 @@ public:
 
 	bool operator==(const Date&) const;
 
-	Date& operator+(int days);
+	Date operator+(int days);
 	Date& operator+=(int days);
 	Date& operator++();
 	Date operator++(int);
 
-	Date& operator-(int days);
+	Date operator-(int days);
 	Date& operator-=(int days);
 	Date& operator--();
 	Date operator--(int);
 	
-	Date& operator*(int months);
+	Date operator*(int months);
 	Date& operator*=(int months);
 	
-	Date& operator/(int months);
+	Date operator/(int months);
 	Date& operator/=(int months);
 	
-	Date& operator&(int years);
+	Date operator&(int years);
 	Date& operator&=(int years);
 	
-	Date& operator|(int years);
+	Date operator|(int years);
 	Date& operator|=(int years);
 	
-	Date& operator^(int weeks);
+	Date operator^(int weeks);
 	Date& operator^=(int weeks);
 	
-	Date& operator%(int weeks);
+	Date operator%(int weeks);
 	Date& operator%=(int weeks);
 	
 	int operator-(Date &date2);
